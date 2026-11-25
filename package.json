@@ -1,0 +1,60 @@
+{
+  "name": "dsh-refresh",
+  "version": "0.5.0",
+  "type": "module",
+  "description": "Restart, quit and hot-reload the DSH desktop app from the sidebar: two icon buttons next to the logo plus a reload button in the conversation header.",
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "os": [
+    "win32"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "reload",
+    "restart",
+    "quit",
+    "desktop"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/G-TY/dsh-refresh.git"
+  },
+  "homepage": "https://github.com/G-TY/dsh-refresh#readme",
+  "bugs": {
+    "url": "https://github.com/G-TY/dsh-refresh/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "assets",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs",
+    "test"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}
