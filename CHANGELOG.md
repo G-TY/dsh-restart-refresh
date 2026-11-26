@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.3
+
+- Same content as 0.6.2. Republished under a new version number because the first upload of 0.6.2 was still being processed by the registry (`409 Cannot publish over previously staged version`); both ended up live, `latest` points here.
+
 ## 0.6.2
 
 - Wording only: the marketplace entry and the plugin-list description now say the header button "refreshes the page and hot-reloads plugin code", and the quit/restart note reads "a normal close, not a force kill — no system chime and no error dialog".
