@@ -1,6 +1,6 @@
 {
   "name": "dsh-restart-refresh",
-  "version": "0.6.3",
+  "version": "0.6.2",
   "type": "module",
   "description": "Restart or quit the DSH desktop app from two sidebar icons, and refresh the page / hot-reload plugin code from the conversation header.",
   "license": "MIT",
