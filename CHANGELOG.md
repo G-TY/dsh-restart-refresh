@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2
+
+- Wording only: the marketplace entry and the plugin-list description now say the header button "refreshes the page and hot-reloads plugin code", and the quit/restart note reads "a normal close, not a force kill — no system chime and no error dialog".
+
 ## 0.6.1
 
 - **Safety fix.** The helper now looks the shell up by PID before doing anything (`Win32_Process`): if that PID turns out to run a different executable — Windows recycles PIDs — it aborts instead of closing somebody else's windows, and it also refuses when the Host is not a child of that process.

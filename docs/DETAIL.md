@@ -23,9 +23,9 @@
 助手脚本：
 
 1. 只等 250ms（够 HTTP 响应发回页面），校验 exe 还在；
-2. **先试优雅退出**（0.4.4）：`Add-Type` 编译一个小的 `DshGraceful` 类，用 `EnumWindows` 找出该 pid 的所有顶层窗口，先给全部窗口 `PostMessage(WM_QUERYENDSESSION)` + `WM_ENDSESSION(TRUE)`，再给可见窗口 `WM_CLOSE`。
+2. **先试正常关闭**（0.4.4）：`Add-Type` 编译一个小的 `DshGraceful` 类，用 `EnumWindows` 找出该 pid 的所有顶层窗口，先给全部窗口 `PostMessage(WM_QUERYENDSESSION)` + `WM_ENDSESSION(TRUE)`，再给可见窗口 `WM_CLOSE`。
    - 为什么这样能成：壳的 `window.on("close")` 里有 `if (quitting || shellInstallerOwnsQuit || sessionEnding) return;`，否则就 `preventDefault()` 变成"最小化到托盘"；而 `sessionEnding` 正是 `window.on("session-end")` 置位的。窗口先收到会话结束消息，随后那个 `WM_CLOSE` 就不再被拦，窗口真的关掉 → `window-all-closed` → `app.quit()` → `before-quit` 里 `sessionEnding` 让 `finishQuit()` 直接走完（停 Host、存状态、收托盘），还跳过了「有任务在跑」的二次确认。
-   - 附带好处：不走 `TerminateProcess`，**不会有 Windows 那声「叮」**（强杀有窗口的 GUI 进程才会响）。
+   - 附带好处：不走 `TerminateProcess`，**不会有 Windows 那声「叮」，也不会弹「操作失败」的报错框**（强杀有窗口的 GUI 进程才会响、才会报错）。
    - 最多等 8 秒；主进程没退干净就记 `graceful shutdown timed out; falling back to a force stop`，继续走下面的强杀流程。主进程退了但 Host 还在，就单独 `taskkill /F /PID <host>` 补一刀。
 3. 强杀兜底：`taskkill /F /PID <host>`、`taskkill /F /PID <main>`（**不带 `/T`**：助手自己是宿主的后代，杀进程树会先杀掉自己）；
 4. `Wait-Process` 确认主进程真的没了（最多 4 秒），再按镜像名把**残留的 renderer / GPU / utility 子进程**逐个 `Stop-Process -Force` 清掉（最多 12 轮 × 300ms）；
@@ -33,7 +33,7 @@
 4. `-Mode restart` 时先停 400ms，再 `Start-Process -FilePath <exe> -WorkingDirectory <exe 目录> -PassThru`；每轮起完轮询 `Get-Process -Name <exe 名>` 约 2.4 秒，没起来就清残留、等 900ms 再试，最多 10 轮（约 25 秒）；日志会记下新实例的退出码（`round N: pid X exited with 0` 就是又撞上单实例锁）。全失败后兜底用 `explorer.exe <exe>` 走一次双击式启动；`-Mode quit` 在第 3 步之后就结束；
    - **关键坑（0.4.3 修）**：宿主进程的环境里有 `ELECTRON_RUN_AS_NODE=1`，wscript → powershell → `Start-Process` 一路继承；App 拿到这个变量后按 Node 运行，秒退、退出码 0、不建窗口。helper 一开始就 `Remove-Item Env:\ELECTRON_RUN_AS_NODE`（顺带清 `ELECTRON_NO_ATTACH_CONSOLE`），并在清掉时记一行日志。`explorer.exe` 那条兜底之所以能成，是因为它用的是 shell 自己的干净环境。
    - 每轮失败后还会清掉旧宿主的直系子进程（`Stop-Children`，按 `ParentProcessId` 递归；跳过 powershell/wscript/conhost，也跳过命令行含 `billion-context` 的常驻代理）。
-5. 全程追加到 `%TEMP%\dsh-restart-refresh-restart.log`，成功那行带总耗时（实测：优雅退出 1.2s、重启 2.2s）。
+5. 全程追加到 `%TEMP%\dsh-restart-refresh-restart.log`，成功那行带总耗时（实测：正常关闭 1.2s、重启 2.2s）。
 
 > 助手脚本是 PowerShell，`node --check` 管不到。改完用 `node test/dump-helper.mjs` 把生成的 `.ps1` 落到 `%TEMP%\dsh-restart-refresh-check-{restart,quit}.ps1`，再用 `[System.Management.Automation.Language.Parser]::ParseFile()` 过一遍语法（踩过坑：早版本把整段包在一个裸的 `{ }` 里，PowerShell 把它当成 ScriptBlock 字面量**静默输出**而不执行，结果优雅退出根本没跑起来，还照样强杀）。
 

@@ -41,13 +41,13 @@ DSH 的插件分两半：
 
 1. 往临时目录写两个文件：PowerShell 助手（`%TEMP%\dsh-restart-refresh-restart.ps1` / `-quit.ps1`）和一个同名的 `.vbs` 启动器；
 2. 用 `wscript.exe //B 启动器.vbs` 拉起助手——`wscript` 是 GUI 程序，`shell.Run(..., 0, False)` 又是隐藏窗口，所以**全程不会闪命令框**；它立刻返回，助手继续活着；
-3. 先走**优雅退出**：给主窗口发 `WM_QUERYENDSESSION` + `WM_ENDSESSION`（壳看到会话结束就把随后的关窗放行，而不是「最小化到托盘」），再发 `WM_CLOSE`。于是壳自己走正常退出流程——停 Host、存状态、收托盘，还跳过了「有任务在跑」的二次确认。**这条路不会响 Windows 那声「叮」**（强杀 GUI 进程才会）；
+3. 先走**正常关闭**（不是强杀）：给主窗口发 `WM_QUERYENDSESSION` + `WM_ENDSESSION`（壳看到会话结束就把随后的关窗放行，而不是「最小化到托盘」），再发 `WM_CLOSE`。于是壳自己走正常退出流程——停 Host、存状态、收托盘，还跳过了「有任务在跑」的二次确认。**这条路不会响 Windows 那声「叮」，也不会弹「操作失败」的报错框**（强杀 GUI 进程才会）；
 4. 最多等 8 秒；没退干净就回落到 `taskkill /F`，日志里会写 `graceful shutdown timed out; falling back to a force stop`；
 5. **把同名的残留子进程（renderer / GPU / utility）一起扫掉**，再清掉旧宿主的直系子进程（MCP 服务、语音服务等；bili 代理那个常驻守护会被保留）——它们会拖住 App 的单实例锁，也会让新实例启动时多一点负担；
 6. **启动前清掉 `ELECTRON_RUN_AS_NODE`**：宿主是 `ELECTRON_RUN_AS_NODE=1` 跑起来的，这个变量会一路继承到我们拉起的进程，App 收到它就变成纯 Node 进程——秒退、退码 0、没有窗口（这就是之前“只关闭、打不开”的真正原因）；
-7. `-Mode restart` 用同一个可执行文件重新启动 App，并**轮询确认进程真的起来了**；没起来就清干净再试，最多约 25 秒，最后再用 `explorer` 走一次双击式的启动；`-Mode quit` 在优雅退出成功时就到此为止。
+7. `-Mode restart` 用同一个可执行文件重新启动 App，并**轮询确认进程真的起来了**；没起来就清干净再试，最多约 25 秒，最后再用 `explorer` 走一次双击式的启动；`-Mode quit` 在正常关闭成功时就到此为止。
 
-实测：优雅退出约 1.2 秒关干净；重启从点下到 App 重新起来约 2.2 秒（记事本端到端演练：`restart: shell exited gracefully in 1.2s; relaunching` → `relaunched on round 1 in 2.2s`）。旧版本是先等 1.2 秒、再等 5 秒、最后强杀，合计 6～7 秒、会闪命令框、还会响系统音。
+实测：正常关闭约 1.2 秒关干净；重启从点下到 App 重新起来约 2.2 秒（记事本端到端演练：`restart: shell exited gracefully in 1.2s; relaunching` → `relaunched on round 1 in 2.2s`）。旧版本是先等 1.2 秒、再等 5 秒、最后强杀，合计 6～7 秒、会闪命令框、还会响系统音。
 
 日志写在 `%TEMP%\dsh-restart-refresh-restart.log`（每步带耗时；失败时会记下新实例的退出码，以及系统事件日志里的错误），没成功时先看它。
 
