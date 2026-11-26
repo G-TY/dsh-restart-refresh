@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "DSH-refresh",
-    "description": "Adds a Reload button beside the desktop menubar: edited plugins apply with one click, while running sessions, queued messages and drafts stay."
+    "description": "Two icons beside the DSH logo in the sidebar (restart, quit) plus a reload button at the top right of the conversation: edited plugins apply with one click, while running sessions, queued messages and drafts stay."
   }
 }
