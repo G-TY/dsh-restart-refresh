@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+- **Safety fix.** The helper now looks the shell up by PID before doing anything (`Win32_Process`): if that PID turns out to run a different executable — Windows recycles PIDs — it aborts instead of closing somebody else's windows, and it also refuses when the Host is not a child of that process.
+- Package renamed from `dsh-refresh` to `dsh-restart-refresh`; routes, module id, log and settings file names follow the new name.
+
+## 0.6.0
+
+- Package renamed to `dsh-restart-refresh` (the npm name `dsh-refresh` was already taken).
+
 ## 0.5.0
 
 - Portability: the generated PowerShell script is now written as UTF-8 **with BOM** and the VBS launcher as UTF-16LE with BOM, so non-ASCII paths work on other machines.

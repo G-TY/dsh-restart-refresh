@@ -98,6 +98,27 @@ Remove-Item Env:\ELECTRON_NO_ATTACH_CONSOLE -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 250
 if (-not (Test-Path -LiteralPath $Exe)) { Write-Log 'abort: executable is missing'; exit 1 }
 $name = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
+# PIDs are recycled by Windows. Before this script touches anything, prove that
+# $MainPid really is the shell we are about to replace — otherwise a stale pid
+# would make us close (and kill) whatever app inherited the number. $HostPid is
+# the Host the caller was running in, so it must be a child of $MainPid.
+$mainInfo = $null
+try { $mainInfo = Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f $MainPid) -ErrorAction Stop } catch { }
+if (-not $mainInfo) { Write-Log ("abort: main process {0} is gone" -f $MainPid); exit 1 }
+$mainPath = $null
+try { $mainPath = [string]$mainInfo.ExecutablePath } catch { }
+if (-not $mainPath) { Write-Log ("abort: cannot read the image path of {0}" -f $MainPid); exit 1 }
+$same = [string]::Equals([System.IO.Path]::GetFullPath($mainPath), [System.IO.Path]::GetFullPath($Exe), [System.StringComparison]::OrdinalIgnoreCase)
+if (-not $same) {
+  Write-Log ("abort: pid {0} runs {1}, not {2}" -f $MainPid, $mainPath, $Exe)
+  exit 1
+}
+$hostInfo = $null
+try { $hostInfo = Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f $HostPid) -ErrorAction Stop } catch { }
+if ($hostInfo -and ([int]$hostInfo.ParentProcessId -ne $MainPid)) {
+  Write-Log ("abort: host {0} is not a child of {1}" -f $HostPid, $MainPid)
+  exit 1
+}
 # Quit and restart both try the graceful road first: let the shell run its own
 # shutdown (stop the Host, save state, dispose the tray). A bare close does not
 # work — the shell turns it into "hide to tray" — but once the window has seen
