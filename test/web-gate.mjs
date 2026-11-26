@@ -155,7 +155,7 @@ const brandGroups = row.children.filter((child) => child.dataset?.dshRefreshBran
 assert.equal(brandGroups.length, 0, 'no power buttons when the Host is a plain browser build')
 assert.equal(row.children.length, 0, 'nothing is appended to the brand row at all')
 
-const stateCalls = requests.filter((item) => item.url === '/dsh-refresh/state')
+const stateCalls = requests.filter((item) => item.url === '/dsh-restart-refresh/state')
 assert.equal(stateCalls.length, 1, 'the client asks the Host once at boot')
 assert.equal(
   requests.filter((item) => item.init?.method === 'POST').length,

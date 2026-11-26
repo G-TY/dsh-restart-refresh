@@ -34,7 +34,7 @@
 ## 0.3.0
 
 - Settings page **设置 → 刷新与重启** (confirm before restart / before reload / rebuild the page after reload).
-- `POST /dsh-refresh/reload` runs `hmr.runExclusive(() => hmr.reconcileProfile([]))` and reports `pending` / `restartReason` instead of pretending success.
+- `POST /dsh-restart-refresh/reload` runs `hmr.runExclusive(() => hmr.reconcileProfile([]))` and reports `pending` / `restartReason` instead of pretending success.
 
 ## 0.1.0 – 0.2.0
 

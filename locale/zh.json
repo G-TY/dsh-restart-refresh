@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "DSH-refresh",
+    "title": "DSH-restart-refresh",
     "description": "侧栏 DSH 标志旁的「重启 / 退出」两个图标，加上对话头部右上角的「刷新」按钮：改完插件点一下就用，正在跑的会话、排队消息和草稿都保留。"
   }
 }

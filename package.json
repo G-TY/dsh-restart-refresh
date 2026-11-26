@@ -1,6 +1,6 @@
 {
-  "name": "dsh-refresh",
-  "version": "0.5.0",
+  "name": "dsh-restart-refresh",
+  "version": "0.6.0",
   "type": "module",
   "description": "Restart, quit and hot-reload the DSH desktop app from the sidebar: two icon buttons next to the logo plus a reload button in the conversation header.",
   "license": "MIT",
@@ -13,17 +13,18 @@
     "dsh-plugin",
     "deepseek-harness",
     "reload",
+    "refresh",
     "restart",
     "quit",
     "desktop"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/G-TY/dsh-refresh.git"
+    "url": "git+https://github.com/G-TY/dsh-restart-refresh.git"
   },
-  "homepage": "https://github.com/G-TY/dsh-refresh#readme",
+  "homepage": "https://github.com/G-TY/dsh-restart-refresh#readme",
   "bugs": {
-    "url": "https://github.com/G-TY/dsh-refresh/issues"
+    "url": "https://github.com/G-TY/dsh-restart-refresh/issues"
   },
   "exports": {
     ".": "./index.js",

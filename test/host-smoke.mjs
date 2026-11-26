@@ -70,9 +70,9 @@ const ok = (condition, message) => {
 // ---------------------------------------------------------------- settings store
 
 {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-refresh-'))
+  const home = await mkdtemp(join(tmpdir(), 'dsh-restart-refresh-'))
   try {
-    const file = join(home, 'dsh-refresh.json')
+    const file = join(home, 'dsh-restart-refresh.json')
     const store = createSettingsStore({ file })
     assert.deepEqual(await store.read(), SETTINGS_DEFAULTS)
 
@@ -102,7 +102,7 @@ const ok = (condition, message) => {
 // ---------------------------------------------------------------- settings route
 
 {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-refresh-'))
+  const home = await mkdtemp(join(tmpdir(), 'dsh-restart-refresh-'))
   try {
     const handler = createSettingsHandler(createSettingsStore({ file: join(home, 's.json') }))
 
@@ -151,8 +151,8 @@ const ok = (condition, message) => {
     pid: 4321,
     ppid: 1234,
     workDir: 'C:\\Program Files\\DSH',
-    scriptPath: 'C:\\Temp\\dsh-refresh-restart.ps1',
-    logPath: 'C:\\Temp\\dsh-refresh-restart.log',
+    scriptPath: 'C:\\Temp\\dsh-restart-refresh-restart.ps1',
+    logPath: 'C:\\Temp\\dsh-restart-refresh-restart.log',
     writeScript: async (path, data) => {
       written.push({ path, buffer: Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8') })
     },
@@ -205,8 +205,8 @@ const ok = (condition, message) => {
     pid: 4321,
     ppid: 1234,
     workDir: 'C:\\Program Files\\DSH',
-    scriptPath: 'C:\\Temp\\dsh-refresh-quit.ps1',
-    logPath: 'C:\\Temp\\dsh-refresh-restart.log',
+    scriptPath: 'C:\\Temp\\dsh-restart-refresh-quit.ps1',
+    logPath: 'C:\\Temp\\dsh-restart-refresh-restart.log',
     writeScript: async (path, data) => {
       quitWritten.push({ path, buffer: Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8') })
     },
@@ -361,7 +361,7 @@ const ok = (condition, message) => {
 // ---------------------------------------------------------------- state route
 
 {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-refresh-'))
+  const home = await mkdtemp(join(tmpdir(), 'dsh-restart-refresh-'))
   try {
     const store = createSettingsStore({ file: join(home, 's.json') })
     const handler = createStateHandler({
@@ -472,7 +472,7 @@ console.log(`all host-half checks passed (${checks} assertions)`)
 // mutating DSH_HOME in this process and then deleting it wiped the real
 // ~/.dsh once. Only the directory this file created is ever removed.
 {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-refresh-apply-'))
+  const home = await mkdtemp(join(tmpdir(), 'dsh-restart-refresh-apply-'))
   const script = `
     const routes = []
     const ctx = {
@@ -504,11 +504,11 @@ console.log(`all host-half checks passed (${checks} assertions)`)
   try {
     assert.equal(result.code, 0, `apply failed: ${result.err}`)
     assert.deepEqual(JSON.parse(result.out).sort(), [
-      '/dsh-refresh/quit',
-      '/dsh-refresh/reload',
-      '/dsh-refresh/restart',
-      '/dsh-refresh/settings',
-      '/dsh-refresh/state',
+      '/dsh-restart-refresh/quit',
+      '/dsh-restart-refresh/reload',
+      '/dsh-restart-refresh/restart',
+      '/dsh-restart-refresh/settings',
+      '/dsh-restart-refresh/state',
     ])
     ok(true, 'apply registers every route')
   } finally {

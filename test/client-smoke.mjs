@@ -184,7 +184,7 @@ assert.ok(entry === null, 'nothing should be loaded before importing the client 
 await import('../client.js')
 
 assert.ok(entry !== null, 'the client half registers itself with the module loader')
-assert.equal(entry.id, 'dsh-refresh', 'the module id is the package name')
+assert.equal(entry.id, 'dsh-restart-refresh', 'the module id is the package name')
 
 const reactRequests = []
 const client = entry.factory((name) => {
@@ -225,13 +225,13 @@ assert.equal(registered.length, 2, 'two slots are registered')
 
 const [reloadSlot, settingsSlot] = registered
 assert.equal(reloadSlot.options.name, 'conversation.session.header.utilities')
-assert.equal(reloadSlot.options.id, 'dsh-refresh')
+assert.equal(reloadSlot.options.id, 'dsh-restart-refresh')
 assert.equal(reloadSlot.options.order, 29, 'the reload button sits where dsh-unlag puts its own')
 assert.equal(reloadSlot.options.label(), '刷新插件与界面')
 assert.equal(typeof reloadSlot.component, 'function')
 
 assert.equal(settingsSlot.options.name, 'settings.section')
-assert.equal(settingsSlot.options.id, 'dsh-refresh')
+assert.equal(settingsSlot.options.id, 'dsh-restart-refresh')
 assert.equal(settingsSlot.options.order, 100)
 assert.equal(settingsSlot.options.label(), '刷新与重启')
 assert.equal(typeof settingsSlot.component, 'function')
@@ -239,7 +239,7 @@ assert.equal(typeof settingsSlot.component, 'function')
 // ---------------------------------------------------------------- brand buttons
 
 assert.equal(effects.length, 1, 'one effect mounts the brand buttons')
-assert.equal(effects[0].label, 'dsh-refresh: brand buttons')
+assert.equal(effects[0].label, 'dsh-restart-refresh: brand buttons')
 
 const host = row.children.find((child) => child.dataset?.dshRefreshBrand === 'true')
 assert.ok(host, 'the button group is appended to the brand row')
@@ -321,7 +321,7 @@ assert.equal(cardOf(), undefined, 'a pointer far away dismisses the key')
 restartButton.dispatch('click')
 cardOf().dispatch('click')
 await new Promise((resolve) => setTimeout(resolve, 0))
-const restartCall = requests.find((item) => item.url === '/dsh-refresh/restart')
+const restartCall = requests.find((item) => item.url === '/dsh-restart-refresh/restart')
 assert.ok(restartCall, 'pressing the red key posts to the restart route')
 assert.equal(restartCall.init.method, 'POST')
 
@@ -332,7 +332,7 @@ assert.ok(quitCard, 'a press on the power glyph pops its own key')
 assert.equal(quitCard.textContent, '退出')
 quitCard.dispatch('click')
 await new Promise((resolve) => setTimeout(resolve, 0))
-const quitCall = requests.find((item) => item.url === '/dsh-refresh/quit')
+const quitCall = requests.find((item) => item.url === '/dsh-restart-refresh/quit')
 assert.ok(quitCall, 'confirming posts to the quit route')
 
 // ---------------------------------------------------------------- failure path

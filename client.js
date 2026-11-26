@@ -1,5 +1,5 @@
 /**
- * Client half of DSH-refresh.
+ * Client half of DSH-restart-refresh.
  *
  * Three controls, two kinds of staleness:
  *
@@ -18,11 +18,11 @@
  * are appended to `[class*="logoRow"]` and re-attached when React repaints it.
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-refresh',
+  id: 'dsh-restart-refresh',
   factory(require) {
     const React = require('react')
     const h = React.createElement
-    const API = '/dsh-refresh'
+    const API = '/dsh-restart-refresh'
 
     // The DSH client paints `<html lang="zh-CN">`; anything that is not Chinese
     // falls back to English rather than to Chinese, so a ja/ko/fr user gets a
@@ -805,7 +805,7 @@ window.__ModuleLoader__.load({
         h(
           'p',
           { style: { margin: '10px 0 0', fontSize: '12px', opacity: 0.7 } },
-          `${t('logLabel')}：%TEMP%\\dsh-refresh-restart.log`,
+          `${t('logLabel')}：%TEMP%\\dsh-restart-refresh.log`,
         ),
       )
     }
@@ -819,9 +819,9 @@ window.__ModuleLoader__.load({
         // Mount the brand buttons first and on their own: they need no slot, and
         // a slot that refuses registration must not take them down with it.
         try {
-          ctx.effect(() => mountBrandButtons(), 'dsh-refresh: brand buttons')
+          ctx.effect(() => mountBrandButtons(), 'dsh-restart-refresh: brand buttons')
         } catch (error) {
-          console.warn('[dsh-refresh] brand buttons not mounted:', error)
+          console.warn('[dsh-restart-refresh] brand buttons not mounted:', error)
         }
         // Conversation header utility row: same seat dsh-unlag uses.
         try {
@@ -829,7 +829,7 @@ window.__ModuleLoader__.load({
             ctx.slots.register(
               {
                 name: 'conversation.session.header.utilities',
-                id: 'dsh-refresh',
+                id: 'dsh-restart-refresh',
                 order: 29,
                 label: () => t('reload'),
               },
@@ -837,7 +837,7 @@ window.__ModuleLoader__.load({
             ),
           )
         } catch (error) {
-          console.warn('[dsh-refresh] reload button not registered:', error)
+          console.warn('[dsh-restart-refresh] reload button not registered:', error)
         }
         // Settings → 「刷新与重启」.
         try {
@@ -845,7 +845,7 @@ window.__ModuleLoader__.load({
             ctx.slots.register(
               {
                 name: 'settings.section',
-                id: 'dsh-refresh',
+                id: 'dsh-restart-refresh',
                 order: 100,
                 label: () => t('settings'),
               },
@@ -853,7 +853,7 @@ window.__ModuleLoader__.load({
             ),
           )
         } catch (error) {
-          console.warn('[dsh-refresh] settings page not registered:', error)
+          console.warn('[dsh-restart-refresh] settings page not registered:', error)
         }
       },
     }

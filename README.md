@@ -1,4 +1,4 @@
-# DSH-refresh
+# DSH-restart-refresh
 
 Restart, quit and hot-reload DSH without leaving the app. Two icon buttons sit next to the `deepseek` logo (restart · quit) and a third one sits at the right of the conversation header (reload the plugin code). Restart and quit are two-step: the first click shows a small red key, and only the second click acts. Restart is **graceful** — it asks the shell to end its session and close its windows, so state is saved, the Host stops cleanly and Windows does not play its force-kill sound; an 8-second timeout falls back to a hard stop. The reload button runs the harness's own HMR `reconcileProfile` and then rebuilds the page, keeping the running turn, the queued messages and the draft.
 
@@ -39,7 +39,7 @@ DSH 的插件分两半：
 
 所以宿主半身写了这么一手（重启和退出共用，只差最后一步）：
 
-1. 往临时目录写两个文件：PowerShell 助手（`%TEMP%\dsh-refresh-restart.ps1` / `-quit.ps1`）和一个同名的 `.vbs` 启动器；
+1. 往临时目录写两个文件：PowerShell 助手（`%TEMP%\dsh-restart-refresh-restart.ps1` / `-quit.ps1`）和一个同名的 `.vbs` 启动器；
 2. 用 `wscript.exe //B 启动器.vbs` 拉起助手——`wscript` 是 GUI 程序，`shell.Run(..., 0, False)` 又是隐藏窗口，所以**全程不会闪命令框**；它立刻返回，助手继续活着；
 3. 先走**优雅退出**：给主窗口发 `WM_QUERYENDSESSION` + `WM_ENDSESSION`（壳看到会话结束就把随后的关窗放行，而不是「最小化到托盘」），再发 `WM_CLOSE`。于是壳自己走正常退出流程——停 Host、存状态、收托盘，还跳过了「有任务在跑」的二次确认。**这条路不会响 Windows 那声「叮」**（强杀 GUI 进程才会）；
 4. 最多等 8 秒；没退干净就回落到 `taskkill /F`，日志里会写 `graceful shutdown timed out; falling back to a force stop`；
@@ -49,7 +49,7 @@ DSH 的插件分两半：
 
 实测：优雅退出约 1.2 秒关干净；重启从点下到 App 重新起来约 2.2 秒（记事本端到端演练：`restart: shell exited gracefully in 1.2s; relaunching` → `relaunched on round 1 in 2.2s`）。旧版本是先等 1.2 秒、再等 5 秒、最后强杀，合计 6～7 秒、会闪命令框、还会响系统音。
 
-日志写在 `%TEMP%\dsh-refresh-restart.log`（每步带耗时；失败时会记下新实例的退出码，以及系统事件日志里的错误），没成功时先看它。
+日志写在 `%TEMP%\dsh-restart-refresh-restart.log`（每步带耗时；失败时会记下新实例的退出码，以及系统事件日志里的错误），没成功时先看它。
 
 ## 会丢什么
 
@@ -61,7 +61,7 @@ DSH 的插件分两半：
 
 - 两个按钮挂在侧栏品牌行（`[class*="logoRow"]`）里，因为壳没有给「品牌行尾部动作」留 slot，而 `sidebar.brand.mark` / `sidebar.brand.name` 已经被官方 lockup 占着。整组下移 3px，与 `deepseek` 字样的光学中心对齐。
 - 头部刷新键注册在 `conversation.session.header.utilities`（order 29），和 dsh-unlag 同一个座位。
-- 设置页注册在 `settings.section`（id `dsh-refresh`，order 100）。
+- 设置页注册在 `settings.section`（id `dsh-restart-refresh`，order 100）。
 
 `dsh web` 在浏览器里打开时，侧栏没有那个品牌行，两个品牌按钮不出现；头部刷新键仍可用，但宿主会回答「这台机器没有可用的热替换服务」。
 
@@ -71,7 +71,7 @@ DSH 的插件分两半：
 
 ## 卸载
 
-插件页卸载即可，或者删掉 `profiles/desktop/node_modules/dsh-refresh` 与 profile `package.json` 里对应的 bundle 记录。
+插件页卸载即可，或者删掉 `profiles/desktop/node_modules/dsh-restart-refresh` 与 profile `package.json` 里对应的 bundle 记录。
 
 ## 测试
 
@@ -84,7 +84,7 @@ node test/host-smoke.mjs     # 宿主半身：五个路由的方法/来源/体�
 
 ## 目录
 
-- `index.js` 宿主半身：`/dsh-refresh/{restart,quit,reload,settings,state}`
+- `index.js` 宿主半身：`/dsh-restart-refresh/{restart,quit,reload,settings,state}`
 - `client.js` 浏览器半身：品牌行重启/退出 + 头部刷新 + 设置页
 - `cordis.patch.yml` 把插件插进 profile
 - `locale/*.json` 插件页里的名字与说明

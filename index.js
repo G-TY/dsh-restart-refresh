@@ -1,5 +1,5 @@
 /**
- * Host half of DSH-refresh.
+ * Host half of DSH-restart-refresh.
  *
  * Two different kinds of staleness live behind the two buttons:
  *
@@ -46,7 +46,7 @@ function pluginVersion() {
 export const inject = ['webServer']
 
 /** Route prefix; every route below lives under it. */
-export const PREFIX = '/dsh-refresh'
+export const PREFIX = '/dsh-restart-refresh'
 
 const MAX_BODY = 4096
 const RELOAD_TIMEOUT_MS = 8000
@@ -694,8 +694,8 @@ export function apply(ctx) {
   const pid = process.pid
   const ppid = process.ppid
   const home = process.env.DSH_HOME || join(homedir(), '.dsh')
-  const logPath = join(tmpdir(), 'dsh-refresh-restart.log')
-  const store = createSettingsStore({ file: join(home, 'dsh-refresh.json') })
+  const logPath = join(tmpdir(), 'dsh-restart-refresh.log')
+  const store = createSettingsStore({ file: join(home, 'dsh-restart-refresh.json') })
   const support = desktopSupport(process)
   const checkParent = () => parentIsApp(ppid, execPath, (target) => parentImageOf(target, execFileAsync))
   const getHmr = () => (typeof ctx.get === 'function' ? ctx.get('hmr') : undefined)
@@ -708,7 +708,7 @@ export function apply(ctx) {
   const route = (path, handler) =>
     ctx.effect(
       () => ctx.webServer.register({ kind: 'exact', path, handler }),
-      `dsh-refresh: ${path}`,
+      `dsh-restart-refresh: ${path}`,
     )
 
   const lifecycle = (mode) =>
@@ -718,7 +718,7 @@ export function apply(ctx) {
       pid,
       ppid,
       workDir: dirname(execPath),
-      scriptPath: join(tmpdir(), `dsh-refresh-${mode}.ps1`),
+      scriptPath: join(tmpdir(), `dsh-restart-refresh-${mode}.ps1`),
       logPath,
       support,
       parentCheck: checkParent,

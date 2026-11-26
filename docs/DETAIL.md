@@ -1,4 +1,4 @@
-# DSH-refresh 实现细节
+# DSH-restart-refresh 实现细节
 
 三个图标，两件不同的事：**重启/退出**换掉整个 App 进程（宿主代码只有换进程才变），**刷新**用 HMR 换掉插件代码再重建页面。
 
@@ -13,8 +13,8 @@
 
 插件能用的只有进程事实：宿主 `process.pid`、父进程 `process.ppid`（就是 Electron 主进程）、`process.execPath`（桌面端 exe）。所以只能**从外面把这对进程换掉**：
 
-1. `index.js` 收到 `POST /dsh-refresh/restart`（或 `/quit`）；
-2. 把 `HELPER` 脚本写到 `%TEMP%\dsh-refresh-restart.ps1`（退出是 `-quit.ps1`），同时写一个同名的 `.vbs` 启动器；
+1. `index.js` 收到 `POST /dsh-restart-refresh/restart`（或 `/quit`）；
+2. 把 `HELPER` 脚本写到 `%TEMP%\dsh-restart-refresh-restart.ps1`（退出是 `-quit.ps1`），同时写一个同名的 `.vbs` 启动器；
 3. 用 `wscript.exe //nologo //B 启动器.vbs` 拉起并 `unref()`；
    - 为什么用 `wscript`：它是 GUI 子系统程序，本身不占控制台；启动器里 `shell.Run "...", 0, False` 用窗口样式 0 起 PowerShell、且不等它，所以**不闪命令框**，`wscript` 立刻退出、PowerShell 留在后台，能活过它要杀掉的父进程。
    - 试过但不行的两条：直接 `spawn('powershell.exe', …, { detached: true })`——没有控制台，PowerShell 静默退出，脚本一行都不跑（实测）；`cmd /c start /b` 能跑但会闪一个命令框。
@@ -33,13 +33,13 @@
 4. `-Mode restart` 时先停 400ms，再 `Start-Process -FilePath <exe> -WorkingDirectory <exe 目录> -PassThru`；每轮起完轮询 `Get-Process -Name <exe 名>` 约 2.4 秒，没起来就清残留、等 900ms 再试，最多 10 轮（约 25 秒）；日志会记下新实例的退出码（`round N: pid X exited with 0` 就是又撞上单实例锁）。全失败后兜底用 `explorer.exe <exe>` 走一次双击式启动；`-Mode quit` 在第 3 步之后就结束；
    - **关键坑（0.4.3 修）**：宿主进程的环境里有 `ELECTRON_RUN_AS_NODE=1`，wscript → powershell → `Start-Process` 一路继承；App 拿到这个变量后按 Node 运行，秒退、退出码 0、不建窗口。helper 一开始就 `Remove-Item Env:\ELECTRON_RUN_AS_NODE`（顺带清 `ELECTRON_NO_ATTACH_CONSOLE`），并在清掉时记一行日志。`explorer.exe` 那条兜底之所以能成，是因为它用的是 shell 自己的干净环境。
    - 每轮失败后还会清掉旧宿主的直系子进程（`Stop-Children`，按 `ParentProcessId` 递归；跳过 powershell/wscript/conhost，也跳过命令行含 `billion-context` 的常驻代理）。
-5. 全程追加到 `%TEMP%\dsh-refresh-restart.log`，成功那行带总耗时（实测：优雅退出 1.2s、重启 2.2s）。
+5. 全程追加到 `%TEMP%\dsh-restart-refresh-restart.log`，成功那行带总耗时（实测：优雅退出 1.2s、重启 2.2s）。
 
-> 助手脚本是 PowerShell，`node --check` 管不到。改完用 `node test/dump-helper.mjs` 把生成的 `.ps1` 落到 `%TEMP%\dsh-refresh-check-{restart,quit}.ps1`，再用 `[System.Management.Automation.Language.Parser]::ParseFile()` 过一遍语法（踩过坑：早版本把整段包在一个裸的 `{ }` 里，PowerShell 把它当成 ScriptBlock 字面量**静默输出**而不执行，结果优雅退出根本没跑起来，还照样强杀）。
+> 助手脚本是 PowerShell，`node --check` 管不到。改完用 `node test/dump-helper.mjs` 把生成的 `.ps1` 落到 `%TEMP%\dsh-restart-refresh-check-{restart,quit}.ps1`，再用 `[System.Management.Automation.Language.Parser]::ParseFile()` 过一遍语法（踩过坑：早版本把整段包在一个裸的 `{ }` 里，PowerShell 把它当成 ScriptBlock 字面量**静默输出**而不执行，结果优雅退出根本没跑起来，还照样强杀）。
 
 ## 二、刷新键做了什么
 
-`POST /dsh-refresh/reload`：
+`POST /dsh-restart-refresh/reload`：
 
 ```js
 const hmr = ctx.get('hmr')
@@ -57,15 +57,15 @@ const result = await hmr.runExclusive(() => hmr.reconcileProfile([]))
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| POST | `/dsh-refresh/restart` | 关掉并重新打开 App |
-| POST | `/dsh-refresh/quit` | 只关掉 App，不重开 |
-| POST | `/dsh-refresh/reload` | HMR 重新编排插件 + 重建页面 |
-| GET | `/dsh-refresh/state` | `{ desktop, hmr, version, logPath, settings }` |
-| GET/POST | `/dsh-refresh/settings` | 读写三个开关 |
+| POST | `/dsh-restart-refresh/restart` | 关掉并重新打开 App |
+| POST | `/dsh-restart-refresh/quit` | 只关掉 App，不重开 |
+| POST | `/dsh-restart-refresh/reload` | HMR 重新编排插件 + 重建页面 |
+| GET | `/dsh-restart-refresh/state` | `{ desktop, hmr, version, logPath, settings }` |
+| GET/POST | `/dsh-restart-refresh/settings` | 读写三个开关 |
 
 所有路由：非 POST（除 GET 两条）405；`sec-fetch-site: cross-site` 或 Origin 与 Host 不同源 403；body 上限 4 KB；`pid`/`ppid` 非正整数 409 `not-desktop`；写脚本或 spawn 失败 500 `spawn`。
 
-设置落在 `$DSH_HOME/dsh-refresh.json`（默认 `~/.dsh/dsh-refresh.json`）：
+设置落在 `$DSH_HOME/dsh-restart-refresh.json`（默认 `~/.dsh/dsh-restart-refresh.json`）：
 
 ```json
 { "confirmRestart": true, "confirmReload": false, "rebuildAfterReload": true }
@@ -76,14 +76,14 @@ const result = await hmr.runExclusive(() => hmr.reconcileProfile([]))
 **品牌行两个图标**：壳没给「品牌行尾部动作」留 slot，`sidebar.brand.mark` / `sidebar.brand.name` 又已经被官方 lockup 占着（抢了会顶掉官方标识），所以直接往 DOM 里塞：
 
 1. `document.querySelector('[class*="logoRow"]')`（编译后形如 `wtg9ga_logoRow`）；
-2. 在里面追加一个 `span[data-dsh-refresh-brand]`，`display:inline-flex; align-items:center; gap:2px; margin-left:8px; transform:translateY(3px)`——3px 是让它与 `deepseek` 字样的光学中心对齐；
-3. 里面两个 26×26 的图标按钮：`data-dsh-refresh-restart`（循环箭头）在前、`data-dsh-refresh-quit`（电源）在后；
+2. 在里面追加一个 `span[data-dsh-restart-refresh-brand]`，`display:inline-flex; align-items:center; gap:2px; margin-left:8px; transform:translateY(3px)`——3px 是让它与 `deepseek` 字样的光学中心对齐；
+3. 里面两个 26×26 的图标按钮：`data-dsh-restart-refresh-restart`（循环箭头）在前、`data-dsh-restart-refresh-quit`（电源）在后；
 4. 每 1.5 秒复查并补挂（侧栏是 React 画的，重渲染会把节点摘掉），不用 subtree observer——页面重绘太频繁；
 5. `ctx.effect` 的 disposer 里摘掉节点、停掉定时器、关掉可能开着的浮层。
 
-**头部刷新键**：`ctx.slots.inject('conversation.session.header.utilities', …)`，注册 `{ id: 'dsh-refresh', order: 29, label }`——和 dsh-unlag 同一座位，两个插件并存时紧挨着。
+**头部刷新键**：`ctx.slots.inject('conversation.session.header.utilities', …)`，注册 `{ id: 'dsh-restart-refresh', order: 29, label }`——和 dsh-unlag 同一座位，两个插件并存时紧挨着。
 
-**设置页**：`ctx.slots.inject('settings.section', …)`，注册 `{ id: 'dsh-refresh', order: 100, label }`，组件拿 `{ close }`。
+**设置页**：`ctx.slots.inject('settings.section', …)`，注册 `{ id: 'dsh-restart-refresh', order: 100, label }`，组件拿 `{ close }`。
 
 ## 五、提示与确认卡
 
