@@ -7,8 +7,10 @@
  */
 import { spawn } from 'node:child_process'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import assert from 'node:assert/strict'
 
 import {
@@ -65,6 +67,21 @@ let checks = 0
 const ok = (condition, message) => {
   checks += 1
   assert.ok(condition, message)
+}
+
+// ---------------------------------------------------------------- packaging
+
+// A BOM at the head of package.json makes `JSON.parse` throw for anything that
+// reads the file as strict JSON — and it ships inside the npm tarball too. Once
+// the 0.6.3 tarball went out with `EF BB BF` and had to be re-released as 0.6.4,
+// so keep this check: the file must start with `{`.
+{
+  const root = dirname(dirname(fileURLToPath(import.meta.url)))
+  const bytes = readFileSync(join(root, 'package.json')).subarray(0, 3)
+  ok(bytes[0] === 0x7b, 'package.json starts with "{" (no UTF-8 BOM)')
+  ok(!(bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf), 'package.json has no EF BB BF prefix')
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+  ok(typeof pkg.version === 'string' && /^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json carries a plain x.y.z version')
 }
 
 // ---------------------------------------------------------------- settings store

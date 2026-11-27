@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.4
+
+- **Packaging fix.** `package.json` is written as UTF-8 **without** a BOM again. The 0.6.3 tarball on npm started with `EF BB BF`, which makes `JSON.parse` throw for anything that reads the file as strict JSON; 0.6.4 is byte-identical otherwise.
+
 ## 0.6.3
 
 - Same content as 0.6.2. Republished under a new version number because the first upload of 0.6.2 was still being processed by the registry (`409 Cannot publish over previously staged version`); both ended up live, `latest` points here.
